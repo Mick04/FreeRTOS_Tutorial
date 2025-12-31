@@ -1,6 +1,18 @@
 #include <Arduino.h>
 #pragma once
 
+// #define DEBUG // Uncomment to enable debug logs
+
+// Global debug
+// #define DEBUG_ALL
+
+// Subsystem debug
+#define DEBUG_WIFI
+// #define DEBUG_MQTT
+// #define DEBUG_FIREBASE
+// #define DEBUG_LED
+// #define DEBUG_HEATER
+
 // =============================================================
 //                         WiFi State Enum
 // =============================================================

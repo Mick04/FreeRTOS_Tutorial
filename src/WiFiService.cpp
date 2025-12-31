@@ -15,6 +15,7 @@ static void WiFiTask(void *pvParameters)
         //==============================================
         // ---- TEST HOOK (safe to remove later) ----
         //==============================================
+        #if defined(DEBUG) || defined(DEBUG_WIFI)
         if (Serial.available())
         {
             char c = Serial.read();
@@ -26,6 +27,7 @@ static void WiFiTask(void *pvParameters)
                 vTaskDelay(3000);
             }
         }
+        #endif
         //==============================================
         // ---- TEST HOOK (safe to remove later) ----
         //==============================================
