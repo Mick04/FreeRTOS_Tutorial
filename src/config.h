@@ -19,7 +19,8 @@ enum LEDStatus
     OFF,
     GREEN,
     RED,
-    ORANGE
+    ORANGE,
+    BLUE
 };
 // =============================================================
 //              Status LEDs Structure

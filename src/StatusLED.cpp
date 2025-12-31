@@ -6,6 +6,7 @@
 // Global variable definitions
 CRGB leds[NUM_LEDS];
 LEDStatus ledStates[NUM_LEDS];
+static WiFiState lastWifiStatus = WIFI_DISCONNECTED;
 
 void StatusLED_init()
 {
@@ -35,6 +36,9 @@ void updateLED(int index, LEDStatus status)
     case ORANGE:
         leds[index] = CRGB::Orange;
         break;
+    case BLUE:
+        leds[index] = CRGB::Blue;
+        break;
     }
 }
 
@@ -44,19 +48,39 @@ void StatusLED_Task(void *pvParameters)
     {
         // Update WiFi LED based on WiFi status
         WiFiState wifiStatus = WiFiService::getState();
+
+        if (wifiStatus != lastWifiStatus) {
+
         switch (wifiStatus)
         {
         case WIFI_DISCONNECTED:
+            Serial.println("");
+            Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
+            Serial.println("WiFi Disconnected");
+            Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
+            Serial.println("");
             ledStates[WIFI_LED] = RED;
             break;
         case WIFI_CONNECTING:
-            ledStates[WIFI_LED] = ORANGE;
+            Serial.println("");
+            Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+            Serial.println("WiFi Connecting");
+            Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+            Serial.println("");
+            ledStates[WIFI_LED] = BLUE;
             break;
         case WIFI_CONNECTED:
+            Serial.println("");
+            Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
+            Serial.println("WiFi Connected");
+            Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
+            Serial.println("");
             ledStates[WIFI_LED] = GREEN;
 
             break;
         }
+        lastWifiStatus = wifiStatus;
+    }
 
         for (int i = 0; i < NUM_LEDS; i++)
         {
