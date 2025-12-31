@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "WiFiService.h"
 #include "StatusLED.h"
+#include "TemperatureService.h"
 #include "config.h"
 
 void setup()
@@ -14,6 +15,7 @@ void setup()
   WiFiService::inti();
   vTaskDelay(100);  
   StatusLED_init();
+  TemperatureService::init();
 
   // Create FreeRTOS task
   xTaskCreate(

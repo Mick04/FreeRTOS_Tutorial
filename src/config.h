@@ -8,6 +8,7 @@
 
 // Subsystem debug
 #define DEBUG_WIFI
+#define DEBUG_TEMPERATURE
 // #define DEBUG_MQTT
 // #define DEBUG_FIREBASE
 // #define DEBUG_LED
@@ -49,16 +50,11 @@ enum LEDIndex
 #define NUM_LEDS 4 // Number of LEDs in strip
 extern LEDStatus ledStates[NUM_LEDS];
 
-// struct StatusLED {
-//     uint8_t pin;        // ESP32 GPIO connected to LED (if not using a data line for WS2811)
-//     LEDStatus state;    // Current LED state
-// };
 
-// StatusLED leds[4];
 
 // ================= Hardware Pins =================
 #define HEATER_RELAY_PIN 26
-#define ONEWIRE_BUS_PIN 27
+#define ONE_WIRE_BUS 27
 
 //============================================================
 //.             Potentiometer to LED Brightness Control
