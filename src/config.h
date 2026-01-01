@@ -9,7 +9,7 @@
 // Subsystem debug
 #define DEBUG_WIFI
 #define DEBUG_TEMPERATURE
-// #define DEBUG_MQTT
+#define DEBUG_MQTT
 // #define DEBUG_FIREBASE
 // #define DEBUG_LED
 // #define DEBUG_HEATER
@@ -22,6 +22,16 @@ enum WiFiState
     WIFI_DISCONNECTED,
     WIFI_CONNECTING,
     WIFI_CONNECTED
+};
+
+// =============================================================
+//                         MQTT State Enum
+// =============================================================
+enum MQTTState
+{
+    MQTT_STATE_DISCONNECTED,
+    MQTT_STATE_CONNECTING,
+    MQTT_STATE_CONNECTED
 };
 
 // =============================================================
@@ -49,8 +59,6 @@ enum LEDIndex
 
 #define NUM_LEDS 4 // Number of LEDs in strip
 extern LEDStatus ledStates[NUM_LEDS];
-
-
 
 // ================= Hardware Pins =================
 #define HEATER_RELAY_PIN 26

@@ -2,11 +2,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFiService.h"
+#include <MQTTService.h>
 
 // Global variable definitions
 CRGB leds[NUM_LEDS];
 LEDStatus ledStates[NUM_LEDS];
 static WiFiState lastWifiStatus = WIFI_DISCONNECTED;
+static MQTTState lastMqttStatus = MQTT_STATE_DISCONNECTED; // Add this
 
 void StatusLED_init()
 {
@@ -19,6 +21,14 @@ void StatusLED_init()
     {
         ledStates[i] = OFF;
     }
+    // Create FreeRTOS task
+    xTaskCreate(
+        StatusLED_Task,
+        "StatusLED",
+        2048,
+        NULL,
+        1,
+        NULL);
 }
 void updateLED(int index, LEDStatus status)
 {
@@ -49,38 +59,67 @@ void StatusLED_Task(void *pvParameters)
         // Update WiFi LED based on WiFi status
         WiFiState wifiStatus = WiFiService::getState();
 
-        if (wifiStatus != lastWifiStatus) {
-
-        switch (wifiStatus)
+        if (wifiStatus != lastWifiStatus)
         {
-        case WIFI_DISCONNECTED:
-            Serial.println("");
-            Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
-            Serial.println("WiFi Disconnected");
-            Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
-            Serial.println("");
-            ledStates[WIFI_LED] = RED;
-            break;
-        case WIFI_CONNECTING:
-            Serial.println("");
-            Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
-            Serial.println("WiFi Connecting");
-            Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
-            Serial.println("");
-            ledStates[WIFI_LED] = BLUE;
-            break;
-        case WIFI_CONNECTED:
-            Serial.println("");
-            Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
-            Serial.println("WiFi Connected");
-            Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
-            Serial.println("");
-            ledStates[WIFI_LED] = GREEN;
 
-            break;
+            switch (wifiStatus)
+            {
+            case WIFI_DISCONNECTED:
+                Serial.println("");
+                Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
+                Serial.println("WiFi Disconnected");
+                Serial.println("👄👄👄👄👄👄👄👄👄👄👄");
+                Serial.println("");
+                ledStates[WIFI_LED] = RED;
+                break;
+            case WIFI_CONNECTING:
+                Serial.println("");
+                Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+                Serial.println("WiFi Connecting");
+                Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+                Serial.println("");
+                ledStates[WIFI_LED] = BLUE;
+                break;
+            case WIFI_CONNECTED:
+                Serial.println("");
+                Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
+                Serial.println("WiFi Connected");
+                Serial.println("✅✅✅✅✅✅✅✅✅✅✅");
+                Serial.println("");
+                ledStates[WIFI_LED] = GREEN;
+
+                break;
+            }
+            lastWifiStatus = wifiStatus;
         }
-        lastWifiStatus = wifiStatus;
-    }
+
+        MQTTState mqttStatus = MQTTService_getState(); // Use the new function
+
+        if (mqttStatus != lastMqttStatus)
+        {
+            switch (mqttStatus)
+            {
+            case MQTT_STATE_DISCONNECTED:
+                Serial.println("");
+                Serial.println("🔴🔴🔴 MQTT Disconnected 🔴🔴🔴");
+                Serial.println("");
+                ledStates[MQTT_LED] = RED; // You'll need to define MQTT_LED
+                break;
+            case MQTT_STATE_CONNECTING:
+                Serial.println("");
+                Serial.println("🔵🔵🔵 MQTT Connecting 🔵🔵🔵");
+                Serial.println("");
+                ledStates[MQTT_LED] = BLUE;
+                break;
+            case MQTT_STATE_CONNECTED:
+                Serial.println("");
+                Serial.println("✅✅✅ MQTT Connected ✅✅✅");
+                Serial.println("");
+                ledStates[MQTT_LED] = GREEN;
+                break;
+            }
+            lastMqttStatus = mqttStatus;
+        }
 
         for (int i = 0; i < NUM_LEDS; i++)
         {

@@ -1,10 +1,4 @@
 #include "TemperatureService.h"
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "config.h"
 
 // #define ONE_WIRE_BUS 4 // change to your GPIO
 

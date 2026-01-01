@@ -3,30 +3,22 @@
 #include "StatusLED.h"
 #include "TemperatureService.h"
 #include "config.h"
+#include "MQTTService.h"
 
 void setup()
 {
   Serial.begin(115200);
- if (!Serial)
+  if (!Serial)
   {
     // Wait for Serial to initialize
     delay(1000);
-  } 
+  }
   WiFiService::inti();
-  vTaskDelay(100);  
+  vTaskDelay(100);
   StatusLED_init();
   TemperatureService::init();
-
-  // Create FreeRTOS task
-  xTaskCreate(
-      StatusLED_Task,
-      "StatusLED",
-      2048,
-      NULL,
-      1,
-      NULL);
+  MQTTService_init();
 }
-
 void loop()
 {
   // Empty on purpose

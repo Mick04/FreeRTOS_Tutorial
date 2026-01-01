@@ -1,5 +1,11 @@
 #pragma once
 #include <Arduino.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "config.h"
 
 // Logical names for your sensors
 enum TempSensorId {
