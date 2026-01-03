@@ -1,8 +1,5 @@
+// StatusLED.cpp
 #include "StatusLED.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "WiFiService.h"
-#include <MQTTService.h>
 
 // Global variable definitions
 CRGB leds[NUM_LEDS];
@@ -120,6 +117,36 @@ void StatusLED_Task(void *pvParameters)
             }
             lastMqttStatus = mqttStatus;
         }
+        static FirebaseState lastFirebaseState = FIREBASE_DISCONNECTED; // ✅ Local tracking variable
+        FirebaseState currentFirebaseState = FirebaseService_getState();
+        if (currentFirebaseState != lastFirebaseState)
+        {
+            switch (currentFirebaseState)
+            {
+            case FIREBASE_DISCONNECTED:
+                Serial.println("❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥");
+                Serial.println("Firebase Disconnected");
+                Serial.println("❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥❤️‍🔥");
+                ledStates[FIREBASE_LED] = RED;
+                break;
+            case FIREBASE_CONNECTING:
+                Serial.println("");
+                Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+                Serial.println("Firebase Connecting");
+                Serial.println("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶");
+                Serial.println("");
+                ledStates[FIREBASE_LED] = BLUE;
+                break;
+            case FIREBASE_CONNECTED:
+                Serial.println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅");
+                Serial.println("Firebase Connected");
+                Serial.println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅");
+                Serial.println("");
+                ledStates[FIREBASE_LED] = GREEN;
+                break;
+            }
+           lastFirebaseState = currentFirebaseState;
+        }
 
         for (int i = 0; i < NUM_LEDS; i++)
         {
@@ -141,4 +168,18 @@ void StatusLED_Task(void *pvParameters)
         FastLED.show();
         vTaskDelay(pdMS_TO_TICKS(500));
     }
+    // switch (firebaseState)
+    // {
+    // case FIREBASE_DISCONNECTED:
+    //     ledStates[FIREBASE_LED] = RED;
+    //     break;
+    // case FIREBASE_CONNECTING:
+    //     ledStates[FIREBASE_LED] = BLUE;
+    //     break;
+    // case FIREBASE_CONNECTED:
+    //     ledStates[FIREBASE_LED] = GREEN;
+    //     break;
+    //     FastLED.show();
+    //     vTaskDelay(pdMS_TO_TICKS(500));
+    // }
 }

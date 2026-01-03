@@ -1,5 +1,6 @@
+// WiFiService.cpp
 #include "WiFiService.h"
-#include <WiFi.h>
+
 
 static WiFiState wifiState = WIFI_CONNECTING;
 static TaskHandle_t wifiTaskHandle = nullptr;

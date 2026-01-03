@@ -1,5 +1,4 @@
 // MQTTService.cpp
-
 #include "MQTTService.h"
 
 // Global state

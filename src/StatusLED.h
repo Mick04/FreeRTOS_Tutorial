@@ -1,6 +1,12 @@
+//StatusLED.h
 #pragma once
 #include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "WiFiService.h"
+#include "MQTTService.h"
 #include "config.h"
+#include "FirebaseService.h"
 #include <FastLED.h>
 
 #define LED_PIN 25 // Pin for WS2811 LED strip

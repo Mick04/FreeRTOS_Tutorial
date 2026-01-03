@@ -1,9 +1,12 @@
+// main.cpp
 #include <Arduino.h>
 #include "WiFiService.h"
 #include "StatusLED.h"
 #include "TemperatureService.h"
 #include "config.h"
 #include "MQTTService.h"
+#include "FirebaseService.h"
+#include "TimeService.h"
 
 void setup()
 {
@@ -18,7 +21,10 @@ void setup()
   StatusLED_init();
   TemperatureService::init();
   MQTTService_init();
+  FirebaseService_init();
+  TimeService_init();
 }
+
 void loop()
 {
   // Empty on purpose

@@ -1,3 +1,4 @@
+// config.h
 #include <Arduino.h>
 #pragma once
 
@@ -10,7 +11,7 @@
 #define DEBUG_WIFI
 #define DEBUG_TEMPERATURE
 #define DEBUG_MQTT
-// #define DEBUG_FIREBASE
+#define DEBUG_FIREBASE
 // #define DEBUG_LED
 // #define DEBUG_HEATER
 
@@ -32,6 +33,16 @@ enum MQTTState
     MQTT_STATE_DISCONNECTED,
     MQTT_STATE_CONNECTING,
     MQTT_STATE_CONNECTED
+};
+
+//============================================================
+//                  Firebase State Enum
+//============================================================
+enum FirebaseState
+{
+    FIREBASE_DISCONNECTED,
+    FIREBASE_CONNECTING,
+    FIREBASE_CONNECTED
 };
 
 // =============================================================
