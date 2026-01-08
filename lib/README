@@ -44,3 +44,10 @@ libraries by scanning project source files.
 
 More information about PlatformIO Library Dependency Finder
 - https://docs.platformio.org/page/librarymanager/ldf.html
+
+//Use Current Time Strings for Schedule Targets
+
+String now = TimeService_getCurrentTimeString();  // "14:30"
+if (now == schedule.amTargetTime) {
+    Serial.println("Time matches AM schedule!");
+}

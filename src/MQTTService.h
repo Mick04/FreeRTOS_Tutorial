@@ -1,4 +1,19 @@
-// MQTTService.h
+// #include <WiFi.h>
+// #include <PubSubClient.h>
+// #include "config.h"
+// #include "TemperatureService.h"
+
+// #define WIFI_SSID "Gimp"
+// #define WIFI_PASSWORD "FC7KUNPX"
+
+// #define MQTT_SERVER "broker.hivemq.com"
+// #define MQTT_PORT 1883
+
+// extern WiFiClient espClient;
+// extern PubSubClient mqttClient;
+
+// // Function declarations
+// void MqttTask(void *pvParameters);
 #pragma once
 
 #include <WiFi.h>

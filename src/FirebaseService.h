@@ -22,3 +22,4 @@ void FirebaseService_task(void *pvParameters);
 FirebaseState FirebaseService_getState();
 uint32_t TimeService_getEpoch();
 String TimeService_getIsoTimestamp();
+void HeaterControl_update();

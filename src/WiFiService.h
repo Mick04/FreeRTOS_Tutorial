@@ -8,6 +8,8 @@
 String TimeService_getIsoTimestamp();
 uint32_t TimeService_getEpoch();
 
+
+
 // enum WiFiState {
 //     WIFI_DISCONNECTED,
 //     WIFI_CONNECTING,
@@ -15,6 +17,6 @@ uint32_t TimeService_getEpoch();
 // };
 
 namespace WiFiService {
-    void inti();
+    void init();
     WiFiState getState();
 }

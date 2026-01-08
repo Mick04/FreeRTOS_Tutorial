@@ -1,7 +1,6 @@
 // TemperatureService.cpp
 #include "TemperatureService.h"
-
-// #define ONE_WIRE_BUS 4 // change to your GPIO
+#include "HeaterControl.h"
 
 static OneWire oneWire(ONE_WIRE_BUS);
 static DallasTemperature sensors(&oneWire);
@@ -12,12 +11,13 @@ static TemperatureData currentTemps;
 // Mutex to protect it
 static SemaphoreHandle_t tempMutex;
 
-// Task handle (optional, but useful later)
+// Task handle
 static TaskHandle_t tempTaskHandle = nullptr;
 
 static void temperatureTask(void *pvParameters)
 {
     sensors.begin();
+    Serial.println("🌡️ Temperature Service started");
     Serial.println("Found sensors:");
     for (int i = 0; i < sensors.getDeviceCount(); i++)
     {
@@ -36,41 +36,59 @@ static void temperatureTask(void *pvParameters)
         Serial.println();
     }
 
+    TemperatureData previousTemps = {-999.0, -999.0, -999.0};  // ✅ Add this variable
+
     for (;;)
     {
+        // ✅ Read all sensors at once
         sensors.requestTemperatures();
-        float heater = sensors.getTempCByIndex(0);
-        float coolside = sensors.getTempCByIndex(1);
-        float outside = sensors.getTempCByIndex(2);
-
-        // Protect write access
-        if (xSemaphoreTake(tempMutex, portMAX_DELAY))
-        {
-            currentTemps.outside = outside;
-            currentTemps.coolside = coolside;
-            currentTemps.heater = heater;
-            xSemaphoreGive(tempMutex);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(2000)); // every 2 seconds
-
-#if defined(DEBUG) || defined(DEBUG_TEMPERATURE)
+        
         TemperatureData temps;
+        temps.heater = sensors.getTempCByIndex(0);
+        temps.coolside = sensors.getTempCByIndex(1);
+        temps.outside = sensors.getTempCByIndex(2);
 
-        if (TemperatureService::getTemperatures(temps))
+        // ✅ Check if readings are valid (not -127 or 85)
+        if (temps.heater > -127 && temps.heater < 85 &&
+            temps.coolside > -127 && temps.coolside < 85 &&
+            temps.outside > -127 && temps.outside < 85)
         {
-            Serial.print("Outside: ");
-            Serial.println(temps.outside);
-            Serial.print("CoolSide: ");
-            Serial.println(temps.coolside);
+            // Store temperatures
+            if (xSemaphoreTake(tempMutex, portMAX_DELAY))
+            {
+                currentTemps = temps;
+                xSemaphoreGive(tempMutex);
+            }
+            
+            // ✅ Call heater control every temperature reading
+            HeaterControl_update();
+            
+            // Check for significant changes
+            if (abs(temps.heater - previousTemps.heater) >= 0.5 //||
+                //abs(temps.coolside - previousTemps.coolside) >= 0.5 ||
+                //abs(temps.outside - previousTemps.outside) >= 0.5
+                )
+            {
+                Serial.printf("🌡️ Temps: H=%.2f°C C=%.2f°C O=%.2f°C\n", 
+                              temps.heater, temps.coolside, temps.outside);
+                previousTemps = temps;
+            }
+
+            #if defined(DEBUG) || defined(DEBUG_TEMPERATURE)
+            // Serial.print("Outside: ");
+            // Serial.println(temps.outside);
+            // Serial.print("CoolSide: ");
+            // Serial.println(temps.coolside);
             Serial.print("Heater: ");
             Serial.println(temps.heater);
+            #endif
         }
         else
         {
-            Serial.println("Could not get temperatures (mutex busy)");
+            Serial.println("❌ Invalid temperature readings - sensor error");
         }
-#endif
+
+        vTaskDelay(pdMS_TO_TICKS(2000)); // every 2 seconds
     }
 }
 

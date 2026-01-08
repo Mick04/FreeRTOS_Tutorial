@@ -7,14 +7,18 @@
 #include "freertos/semphr.h"
 
 // -------------------- Types --------------------
-enum TimeState_t {
+enum TimeState_t
+{
     TIME_DISCONNECTED,
     TIME_SYNCING,
     TIME_READY
 };
 
+// -------------------- Globals --------------------
+struct tm TimeService_getLocalTime();// returns current local time with DST
+
 // -------------------- API --------------------
 void TimeService_init();
 TimeState_t TimeService_getState();
-struct tm TimeService_getLocalTime();  // returns current local time with DST
+void parseTimeString(const String &timeStr, uint8_t &hour, uint8_t &minute);
 String TimeService_getFormattedDateTime();

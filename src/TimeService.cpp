@@ -6,8 +6,8 @@
 static TimeState_t timeState = TIME_DISCONNECTED;
 static SemaphoreHandle_t timeMutex = NULL;
 
-static const char* ntpServer = "pool.ntp.org";
-static const long gmtOffset_sec = 0;   // UTC
+static const char *ntpServer = "pool.ntp.org";
+static const long gmtOffset_sec = 0;     // UTC
 static const int daylightOffset_sec = 0; // Adjusted dynamically
 static bool dstActive = false;
 
@@ -20,18 +20,22 @@ bool isDST(struct tm *timeinfo)
     int wday = timeinfo->tm_wday; // Sunday = 0
     int lastSunday;
 
-    if (month < 3 || month > 10) return false;
-    if (month > 3 && month < 10) return true;
+    if (month < 3 || month > 10)
+        return false;
+    if (month > 3 && month < 10)
+        return true;
 
     // Find last Sunday
     lastSunday = day - wday;
-    if (month == 3) return day >= lastSunday; // DST starts
-    if (month == 10) return day < lastSunday; // DST ends
+    if (month == 3)
+        return day >= lastSunday; // DST starts
+    if (month == 10)
+        return day < lastSunday; // DST ends
     return false;
 }
 
 // -------------------- Task --------------------
-void TimeService_task(void* pvParameters)
+void TimeService_task(void *pvParameters)
 {
     Serial.println("⏰ Time Service Task started");
 
@@ -61,7 +65,8 @@ void TimeService_task(void* pvParameters)
         {
             // Apply DST
             dstActive = isDST(&timeinfo);
-            if (dstActive) timeinfo.tm_hour += 1;
+            if (dstActive)
+                timeinfo.tm_hour += 1;
 
             if (xSemaphoreTake(timeMutex, pdMS_TO_TICKS(100)) == pdTRUE)
             {
@@ -72,14 +77,30 @@ void TimeService_task(void* pvParameters)
             char buffer[64];
             strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
             Serial.printf("✅ Current Time: %s (DST=%d)\n", buffer, dstActive);
+            Serial.println("");
+            Serial.println("⏰ Time synchronized successfully");
+            Serial.println("Current Time");
+            Serial.println(buffer);
+            Serial.println("");
         }
         else
         {
             Serial.println("❌ Failed to get NTP time, retrying...");
         }
+        
 
         vTaskDelay(pdMS_TO_TICKS(60000)); // update every 60s
     }
+}
+
+//==================== Get Current Time ====================
+
+String TimeService_getCurrentTimeString()
+{
+    struct tm timeinfo = TimeService_getLocalTime();
+    char buffer[6];
+    snprintf(buffer, sizeof(buffer), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+    return String(buffer);
 }
 
 // -------------------- Public API --------------------
@@ -99,8 +120,7 @@ void TimeService_init()
         NULL,
         1,
         NULL,
-        1
-    );
+        1);
 
     Serial.println("✅ Time task created");
 }
@@ -127,7 +147,8 @@ struct tm TimeService_getLocalTime()
     {
         memset(&timeinfo, 0, sizeof(timeinfo));
     }
-    if (dstActive) timeinfo.tm_hour += 1;
+    if (dstActive)
+        timeinfo.tm_hour += 1;
     return timeinfo;
 }
 
@@ -148,21 +169,43 @@ uint32_t TimeService_getEpoch()
 
 String TimeService_getFormattedDateTime()
 {
-    time_t now;
-    struct tm timeinfo;
+    struct tm t = TimeService_getLocalTime();
+    char buf[25];
+    strftime(buf, sizeof(buf), "%d/%m/%Y %H:%M:%S", &t);
+    return String(buf);
+}
 
-    time(&now);
-    localtime_r(&now, &timeinfo); // DST-aware
+// String TimeService_getFormattedDateTime()
+// {
+//     time_t now;
+//     struct tm timeinfo;
 
-    char buffer[25];
-    snprintf(buffer, sizeof(buffer),
-             "%02d/%02d/%04d %02d:%02d:%02d",
-             timeinfo.tm_mday,
-             timeinfo.tm_mon + 1,
-             timeinfo.tm_year + 1900,
-             timeinfo.tm_hour,
-             timeinfo.tm_min,
-             timeinfo.tm_sec);
+//     time(&now);
+//     localtime_r(&now, &timeinfo); // DST-aware
 
-    return String(buffer);
+//     char buffer[25];
+//     snprintf(buffer, sizeof(buffer),
+//              "%02d/%02d/%04d %02d:%02d:%02d",
+//              timeinfo.tm_mday,
+//              timeinfo.tm_mon + 1,
+//              timeinfo.tm_year + 1900,
+//              timeinfo.tm_hour,
+//              timeinfo.tm_min,
+//              timeinfo.tm_sec);
+
+//     return String(buffer);
+// }
+
+void parseTimeString(const String &timeStr, uint8_t &hour, uint8_t &minute)
+{
+    if (timeStr.length() != 5)
+        return;
+
+    hour = timeStr.substring(0, 2).toInt();
+    minute = timeStr.substring(3, 5).toInt();
+    Serial.println("");
+    Serial.println("☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️");
+    Serial.printf("Parsed time string '%s' to %02d:%02d\n", timeStr.c_str(), hour, minute);
+    Serial.println("☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️");
+    Serial.println("");
 }

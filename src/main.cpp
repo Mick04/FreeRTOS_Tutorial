@@ -7,6 +7,8 @@
 #include "MQTTService.h"
 #include "FirebaseService.h"
 #include "TimeService.h"
+#include "ScheduleService.h"
+#include "HeaterControl.h"
 
 void setup()
 {
@@ -16,10 +18,11 @@ void setup()
     // Wait for Serial to initialize
     delay(1000);
   }
-  WiFiService::inti();
+  WiFiService::init();
   vTaskDelay(100);
   StatusLED_init();
   TemperatureService::init();
+  ScheduleService_init();   
   MQTTService_init();
   FirebaseService_init();
   TimeService_init();

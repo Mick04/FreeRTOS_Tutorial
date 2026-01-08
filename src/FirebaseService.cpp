@@ -1,4 +1,5 @@
 
+
 // FirebaseService.cpp - REST API version
 #include "FirebaseService.h"
 #include <Arduino.h>
@@ -10,9 +11,11 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "TimeService.h"
+#include "ScheduleService.h"
+#include "HeaterControl.h"
 
 // -------------------- Globals --------------------
-FirebaseState firebaseState = FIREBASE_DISCONNECTED;
+FirebaseState firebaseState = FIREBASE_CONNECTING;
 SemaphoreHandle_t firebaseMutex = NULL;
 
 // Auth token (will be obtained once)
@@ -22,6 +25,7 @@ unsigned long tokenExpiry = 0;
 // -------------------- Forward Declarations --------------------
 bool getAuthToken();
 bool writeToFirebase(const char *path, float value);
+bool readScheduleFromFirebase();
 
 // -------------------- Initialization --------------------
 void FirebaseService_init()
@@ -55,7 +59,9 @@ void FirebaseService_task(void *pvParameters)
     TemperatureData temps;
     unsigned long lastWrite = 0;
     unsigned long lastAuthAttempt = 0;
+    unsigned long lastScheduleRead = 0;
     bool authenticated = false;
+    bool firstScheduleRead = false;
 
     Serial.println("🔥 Firebase Task started");
 
@@ -104,6 +110,26 @@ void FirebaseService_task(void *pvParameters)
             }
         }
 
+         // ✅ Read schedule immediately after auth, then every 60 seconds
+        if (authenticated && (!firstScheduleRead || (millis() - lastScheduleRead >= 600)))
+        {
+            Serial.println("");
+            Serial.println("📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥");
+            Serial.println("\n📥 Reading schedule from Firebase...");
+            Serial.println("");
+            Serial.println("📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥");
+            if (readScheduleFromFirebase())
+            {
+                Serial.println("✅ Schedule updated");
+                lastScheduleRead = millis();
+                firstScheduleRead = true;
+            }
+            else
+            {
+                Serial.println("❌ Failed to read schedule");
+            }
+        }
+
         // Write data every 10 seconds
         if (authenticated && (millis() - lastWrite >= 10000))
         {
@@ -112,15 +138,14 @@ void FirebaseService_task(void *pvParameters)
                 Serial.println("\n📤 Writing to Firebase...");
                 bool success = true;
                 uint32_t epoch = TimeService_getEpoch();
-                String isoTime = TimeService_getIsoTimestamp();
+                
                 success &= writeToFirebase("/tortoise/presenttemperature/heater", temps.heater);
                 success &= writeToFirebase("/tortoise/presenttemperature/coolside", temps.coolside);
                 success &= writeToFirebase("/tortoise/presenttemperature/outside", temps.outside);
                 success &= writeToFirebase("/tortoise/presenttemperature/epoch", (float)epoch);
 
-                String formattedTime = TimeService_getFormattedDateTime();
-
                 // Write formatted timestamp
+                String formattedTime = TimeService_getFormattedDateTime();
                 HTTPClient http;
                 String url = String(DATABASE_URL) +
                              "/tortoise/presenttemperature/timestamp.json?auth=" + idToken;
@@ -148,6 +173,73 @@ void FirebaseService_task(void *pvParameters)
     }
 }
 
+// -------------------- Read Schedule --------------------
+bool readScheduleFromFirebase()
+{
+    if (idToken.length() == 0)
+    {
+        Serial.println("❌ No auth token");
+        return false;
+    }
+
+    HTTPClient http;
+    String url = String(DATABASE_URL) + "/React/schedule.json?auth=" + idToken;
+    http.begin(url);
+    
+    int httpCode = http.GET();
+    
+    if (httpCode == 200)
+    {
+        String response = http.getString();
+        Serial.println("📥 Schedule JSON:");
+        Serial.println(response);
+        
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, response);
+        
+
+if (!error)
+{
+    HeaterSchedule heaterSchedule;
+    
+    heaterSchedule.amTarget = doc["amTemperature"] | 0;
+    heaterSchedule.pmTarget = doc["pmTemperature"] | 0;
+       heaterSchedule.amTargetTime = doc["amScheduledTime"] | "07:00";  // ✅ Direct string assignment
+    heaterSchedule.pmTargetTime = doc["pmScheduledTime"] | "19:00";  // ✅ Direct string assignment    
+    // parseTimeString(doc["amScheduledTime"].as<String>(),
+    //                 heaterSchedule.amHour, heaterSchedule.amMinute);
+    
+    // parseTimeString(doc["pmScheduledTime"].as<String>(),
+    //                 heaterSchedule.pmHour, heaterSchedule.pmMinute);
+    
+            // ✅ Only set if initialized
+            if (ScheduleService_isInitialized())
+            {
+                ScheduleService_setSchedule(heaterSchedule);
+            }
+            else
+            {
+                Serial.println("⚠️ ScheduleService not ready, skipping update");
+            }
+            
+            http.end();
+            return true;
+        }
+        else
+        {
+            Serial.println("❌ Failed to parse schedule JSON");
+        }
+    }
+    else
+    {
+        Serial.printf("❌ Failed to read schedule (HTTP %d)\n", httpCode);
+    }
+    
+    http.end();
+    return false;
+}
+
+
 // -------------------- Auth Function --------------------
 bool getAuthToken()
 {
@@ -172,7 +264,7 @@ bool getAuthToken()
     {
         String response = http.getString();
 
-        StaticJsonDocument<512> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
         if (!error)

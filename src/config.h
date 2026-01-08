@@ -15,6 +15,11 @@
 // #define DEBUG_LED
 // #define DEBUG_HEATER
 
+// Track previous connection states for status publishing
+static int prevWifi = -1;
+// static int prevMqtt = -1;
+// static int prevFirebase = -1;
+
 // =============================================================
 //                         WiFi State Enum
 // =============================================================
