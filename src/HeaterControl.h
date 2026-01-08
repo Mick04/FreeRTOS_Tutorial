@@ -4,3 +4,4 @@
 void Heater_on();
 void Heater_off();
 void HeaterControl_update();
+void HeaterControl_init();

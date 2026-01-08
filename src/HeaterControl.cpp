@@ -5,9 +5,20 @@
 #include <Arduino.h>
 #include "config.h"
 
+void HeaterControl_init()
+{
+    pinMode(HEATER_RELAY_PIN, OUTPUT);
+    digitalWrite(HEATER_RELAY_PIN, LOW);  // Start with heater OFF
+    Serial.printf("🔥 Heater Control initialized on pin %d\n", HEATER_RELAY_PIN);
+}
 
 void HeaterControl_update()
 {
+      // ✅ Add safety check - don't run if services aren't ready
+    if (!ScheduleService_isInitialized()) {
+        Serial.println("⚠️ HeaterControl: ScheduleService not ready, skipping");
+        return;
+    }
     Serial.println("");
     Serial.println("⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️");
     Serial.println("HeaterControl_update called");
@@ -31,12 +42,14 @@ Serial.printf("\n");
 
 void Heater_on()
 {
-    digitalWrite(HEATER_RELAY_PIN, LOW);
-    Serial.println("🔥 Heater ON 🔥");
+    digitalWrite(HEATER_RELAY_PIN, LOW);// LOW = ON for relay
+    Serial.printf("🔥 Heater ON 🔥 (Pin %d = LOW)\n", HEATER_RELAY_PIN);
+    Serial.printf("🔍 Pin state: %d\n", digitalRead(HEATER_RELAY_PIN));
 }
 
 void Heater_off()
 {
-    digitalWrite(HEATER_RELAY_PIN, HIGH);
-    Serial.println("🧊 Heater OFF 🧊");
+    digitalWrite(HEATER_RELAY_PIN, HIGH);// HIGH = OFF for relay
+    Serial.printf("🧊 Heater OFF 🧊 (Pin %d = HIGH)\n", HEATER_RELAY_PIN);
+    Serial.printf("🔍 Pin state: %d\n", digitalRead(HEATER_RELAY_PIN));
 }

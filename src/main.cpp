@@ -19,13 +19,14 @@ void setup()
     delay(1000);
   }
   WiFiService::init();
-  vTaskDelay(100);
-  StatusLED_init();
-  TemperatureService::init();
-  ScheduleService_init();   
   MQTTService_init();
   FirebaseService_init();
   TimeService_init();
+  vTaskDelay(100);
+  StatusLED_init();
+  HeaterControl_init();
+  ScheduleService_init();
+  TemperatureService::init();
 }
 
 void loop()
