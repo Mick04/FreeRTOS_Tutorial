@@ -79,9 +79,15 @@ static void WiFiTask(void *pvParameters)
 {
     WiFi.begin("Gimp", "FC7KUNPX");
     wifiState = WIFI_CONNECTING;
+    Serial.println("");
+    Serial.println("📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 ");
+    Serial.println("📡📡 📡 📡  WiFi Task started, connecting to WiFi...📡 📡 📡 ");
+    Serial.println("📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 📡 ");
 
     for (;;)
     {
+         wifiState = WIFI_DISCONNECTED;
+
         #if defined(DEBUG) || defined(DEBUG_WIFI)
         if (Serial.available())
         {
@@ -122,6 +128,7 @@ static void WiFiTask(void *pvParameters)
                     break;
                 default:
                     Serial.println("📡 WiFi CONNECTING");
+                    wifiState = WIFI_CONNECTING;
                     break;
             }
         }

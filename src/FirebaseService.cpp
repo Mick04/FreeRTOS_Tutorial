@@ -111,7 +111,7 @@ void FirebaseService_task(void *pvParameters)
         }
 
          // ✅ Read schedule immediately after auth, then every 60 seconds
-        if (authenticated && (!firstScheduleRead || (millis() - lastScheduleRead >= 600)))
+        if (authenticated && (!firstScheduleRead || (millis() - lastScheduleRead >= 60000)))
         {
             Serial.println("");
             Serial.println("📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥");
