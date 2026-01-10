@@ -36,17 +36,17 @@ static void temperatureTask(void *pvParameters)
         Serial.println();
     }
 
-    TemperatureData previousTemps = {-999.0, -999.0, -999.0};  // ✅ Add this variable
+    TemperatureData previousTemps = {-999.0, -999.0, -999.0}; // ✅ Add this variable
 
     for (;;)
     {
         // ✅ Read all sensors at once
         sensors.requestTemperatures();
-        
+
         TemperatureData temps;
         temps.heater = sensors.getTempCByIndex(0);
-        temps.coolside = sensors.getTempCByIndex(1);
-        temps.outside = sensors.getTempCByIndex(2);
+        temps.outside = sensors.getTempCByIndex(1);
+        temps.coolside = sensors.getTempCByIndex(2);
 
         // ✅ Check if readings are valid (not -127 or 85)
         if (temps.heater > -127 && temps.heater < 85 &&
@@ -59,29 +59,26 @@ static void temperatureTask(void *pvParameters)
                 currentTemps = temps;
                 xSemaphoreGive(tempMutex);
             }
-            
+
             // ✅ Call heater control every temperature reading
             HeaterControl_update();
-            
+
             // Check for significant changes
-            if (abs(temps.heater - previousTemps.heater) >= 0.5 //||
-                //abs(temps.coolside - previousTemps.coolside) >= 0.5 ||
-                //abs(temps.outside - previousTemps.outside) >= 0.5
-                )
+            if (abs(temps.heater - previousTemps.heater) >= 0.5)
             {
-                Serial.printf("🌡️ Temps: H=%.2f°C C=%.2f°C O=%.2f°C\n", 
+                Serial.printf("🌡️ Temps: H=%.2f°C C=%.2f°C O=%.2f°C\n",
                               temps.heater, temps.coolside, temps.outside);
                 previousTemps = temps;
             }
 
-            #if defined(DEBUG) || defined(DEBUG_TEMPERATURE)
+#if defined(DEBUG) || defined(DEBUG_TEMPERATURE)
             // Serial.print("Outside: ");
             // Serial.println(temps.outside);
             // Serial.print("CoolSide: ");
             // Serial.println(temps.coolside);
             Serial.print("Heater: ");
             Serial.println(temps.heater);
-            #endif
+#endif
         }
         else
         {
