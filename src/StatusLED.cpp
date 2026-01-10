@@ -19,7 +19,7 @@ void StatusLED_init()
     // Initialize all LEDs to OFF
     for (int i = 0; i < NUM_LEDS; i++)
     {
-        ledStates[i] = OFF;
+        ledStates[i] = ORANGE;
     }
     // Create FreeRTOS task
     xTaskCreate(
@@ -59,7 +59,7 @@ void StatusLED_Task(void *pvParameters)
     static unsigned long firebaseConnectingStart = 0;
     static FirebaseState lastFirebaseState = FIREBASE_DISCONNECTED;
 
-    const unsigned long MIN_CONNECTING_TIME = 30000; // 30 seconds
+    const unsigned long MIN_CONNECTING_TIME = 10000; // 10 seconds
 
     // ✅ Initialize LED states based on current service status
     Serial.println("🎨 Initializing LED states...");

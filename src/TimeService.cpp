@@ -203,9 +203,4 @@ void parseTimeString(const String &timeStr, uint8_t &hour, uint8_t &minute)
 
     hour = timeStr.substring(0, 2).toInt();
     minute = timeStr.substring(3, 5).toInt();
-    Serial.println("");
-    Serial.println("☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️");
-    Serial.printf("Parsed time string '%s' to %02d:%02d\n", timeStr.c_str(), hour, minute);
-    Serial.println("☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️☮️");
-    Serial.println("");
 }

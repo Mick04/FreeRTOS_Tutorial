@@ -30,10 +30,6 @@ bool readScheduleFromFirebase();
 // -------------------- Initialization --------------------
 void FirebaseService_init()
 {
-    Serial.println("\n===============================");
-    Serial.println("🔥 Firebase REST API Service 🔥");
-    Serial.println("===============================\n");
-
     firebaseMutex = xSemaphoreCreateMutex();
     if (!firebaseMutex)
     {
@@ -49,8 +45,6 @@ void FirebaseService_init()
         1,
         NULL,
         1);
-
-    Serial.println("✅ Firebase task created");
 }
 
 // -------------------- Task Function --------------------
@@ -62,8 +56,6 @@ void FirebaseService_task(void *pvParameters)
     unsigned long lastScheduleRead = 0;
     bool authenticated = false;
     bool firstScheduleRead = false;
-
-    Serial.println("🔥 Firebase Task started");
 
     for (;;)
     {
@@ -100,24 +92,17 @@ void FirebaseService_task(void *pvParameters)
                     firebaseState = FIREBASE_CONNECTED;
                     xSemaphoreGive(firebaseMutex);
                 }
-                Serial.println("✅ Firebase authenticated and ready!");
             }
             else
             {
-                Serial.println("❌ Firebase authentication failed, will retry");
                 vTaskDelay(pdMS_TO_TICKS(5000));
                 continue;
             }
         }
 
-         // ✅ Read schedule immediately after auth, then every 60 seconds
+        // ✅ Read schedule immediately after auth, then every 60 seconds
         if (authenticated && (!firstScheduleRead || (millis() - lastScheduleRead >= 60000)))
         {
-            Serial.println("");
-            Serial.println("📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥");
-            Serial.println("\n📥 Reading schedule from Firebase...");
-            Serial.println("");
-            Serial.println("📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥📥");
             if (readScheduleFromFirebase())
             {
                 Serial.println("✅ Schedule updated");
@@ -138,7 +123,7 @@ void FirebaseService_task(void *pvParameters)
                 Serial.println("\n📤 Writing to Firebase...");
                 bool success = true;
                 uint32_t epoch = TimeService_getEpoch();
-                
+
                 success &= writeToFirebase("/tortoise/presenttemperature/heater", temps.heater);
                 success &= writeToFirebase("/tortoise/presenttemperature/coolside", temps.coolside);
                 success &= writeToFirebase("/tortoise/presenttemperature/outside", temps.outside);
@@ -156,13 +141,10 @@ void FirebaseService_task(void *pvParameters)
 
                 if (success)
                 {
-                    Serial.printf("✅ Firebase: H=%.2f, C=%.2f, O=%.2f\n",
-                                  temps.heater, temps.coolside, temps.outside);
                     lastWrite = millis();
                 }
                 else
                 {
-                    Serial.println("❌ Some writes failed, token may be expired");
                     authenticated = false;
                     idToken = "";
                 }
@@ -178,40 +160,37 @@ bool readScheduleFromFirebase()
 {
     if (idToken.length() == 0)
     {
-        Serial.println("❌ No auth token");
         return false;
     }
 
     HTTPClient http;
     String url = String(DATABASE_URL) + "/React/schedule.json?auth=" + idToken;
     http.begin(url);
-    
+
     int httpCode = http.GET();
-    
+
     if (httpCode == 200)
     {
         String response = http.getString();
-        Serial.println("📥 Schedule JSON:");
         Serial.println(response);
-        
+
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
-        
 
-if (!error)
-{
-    HeaterSchedule heaterSchedule;
-    
-    heaterSchedule.amTarget = doc["amTemperature"] | 0;
-    heaterSchedule.pmTarget = doc["pmTemperature"] | 0;
-       heaterSchedule.amTargetTime = doc["amScheduledTime"] | "07:00";  // ✅ Direct string assignment
-    heaterSchedule.pmTargetTime = doc["pmScheduledTime"] | "19:00";  // ✅ Direct string assignment    
-    // parseTimeString(doc["amScheduledTime"].as<String>(),
-    //                 heaterSchedule.amHour, heaterSchedule.amMinute);
-    
-    // parseTimeString(doc["pmScheduledTime"].as<String>(),
-    //                 heaterSchedule.pmHour, heaterSchedule.pmMinute);
-    
+        if (!error)
+        {
+            HeaterSchedule heaterSchedule;
+
+            heaterSchedule.amTarget = doc["amTemperature"] | 0;
+            heaterSchedule.pmTarget = doc["pmTemperature"] | 0;
+            heaterSchedule.amTargetTime = doc["amScheduledTime"] | "07:00"; // ✅ Direct string assignment
+            heaterSchedule.pmTargetTime = doc["pmScheduledTime"] | "19:00"; // ✅ Direct string assignment
+                                                                            // parseTimeString(doc["amScheduledTime"].as<String>(),
+                                                                            //                 heaterSchedule.amHour, heaterSchedule.amMinute);
+
+            // parseTimeString(doc["pmScheduledTime"].as<String>(),
+            //                 heaterSchedule.pmHour, heaterSchedule.pmMinute);
+
             // ✅ Only set if initialized
             if (ScheduleService_isInitialized())
             {
@@ -221,7 +200,7 @@ if (!error)
             {
                 Serial.println("⚠️ ScheduleService not ready, skipping update");
             }
-            
+
             http.end();
             return true;
         }
@@ -234,11 +213,10 @@ if (!error)
     {
         Serial.printf("❌ Failed to read schedule (HTTP %d)\n", httpCode);
     }
-    
+
     http.end();
     return false;
 }
-
 
 // -------------------- Auth Function --------------------
 bool getAuthToken()

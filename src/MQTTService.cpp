@@ -1,6 +1,9 @@
 // MQTTService.cpp
 #include "MQTTService.h"
 #include "FirebaseService.h"
+#include "HeaterControl.h"
+#include "ScheduleService.h"
+
 // Global state
 MQTTState mqttState = MQTT_STATE_CONNECTING;
 TaskHandle_t mqttTaskHandle = NULL;
@@ -8,142 +11,6 @@ TaskHandle_t mqttTaskHandle = NULL;
 // Mutex for thread safety
 SemaphoreHandle_t mqttMutex = NULL;
 
-// Connect to MQTT broker
-// bool connectToMqtt(PubSubClient &client)
-// {
-//     // Check WiFi first
-//     if (WiFi.status() != WL_CONNECTED)
-//     {
-//         return false;
-//     }
-
-//     int attempts = 0;
-//     const int MAX_ATTEMPTS = 3;
-
-//     while (!client.connected() && attempts < MAX_ATTEMPTS)
-//     {
-//         Serial.println("Connecting to MQTT...");
-
-//         // Create unique client ID
-//         String clientId = "ESP32_Tortoise_" + String(random(0xffff), HEX);
-
-//         // Yield to watchdog
-//         vTaskDelay(pdMS_TO_TICKS(100));
-
-//         if (client.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD))
-//         {
-//             Serial.println("MQTT Connected!");
-//             return true;
-//         }
-//         else
-//         {
-//             attempts++;
-//             int rc = client.state();
-//             Serial.print("MQTT connection failed, rc=");
-//             Serial.print(rc);
-//             Serial.print(" (");
-
-//             // Print human-readable error
-//             switch (rc)
-//             {
-//             case -4:
-//                 Serial.print("connection timeout");
-//                 break;
-//             case -3:
-//                 Serial.print("connection lost");
-//                 break;
-//             case -2:
-//                 Serial.print("connect failed");
-//                 break;
-//             case -1:
-//                 Serial.print("disconnected");
-//                 break;
-//             case 0:
-//                 Serial.print("connected");
-//                 break;
-//             case 1:
-//                 Serial.print("bad protocol version");
-//                 break;
-//             case 2:
-//                 Serial.print("bad client id");
-//                 break;
-//             case 3:
-//                 Serial.print("unavailable");
-//                 break;
-//             case 4:
-//                 Serial.print("bad credentials");
-//                 break;
-//             case 5:
-//                 Serial.print("unauthorized");
-//                 break;
-//             default:
-//                 Serial.print("unknown");
-//                 break;
-//             }
-
-//             Serial.print(") attempt ");
-//             Serial.print(attempts);
-//             Serial.print("/");
-//             Serial.println(MAX_ATTEMPTS);
-
-//             // Clean up failed connection
-//             client.disconnect();
-
-//             // Shorter delay between attempts
-//             vTaskDelay(pdMS_TO_TICKS(1000));
-//         }
-//     }
-
-//     Serial.println("MQTT connection failed after max attempts");
-//     return false;
-// }
-
-// bool connectToMqtt(PubSubClient &client)
-// {
-//     if (WiFi.status() != WL_CONNECTED)
-//     {
-//         return false;
-//     }
-
-//     int attempts = 0;
-//     const int MAX_ATTEMPTS = 3;
-
-//     while (!client.connected() && attempts < MAX_ATTEMPTS)
-//     {
-//         Serial.println("Connecting to MQTT...");
-
-//         String clientId = "ESP32_Tortoise_" + String(random(0xffff), HEX);
-
-//         vTaskDelay(pdMS_TO_TICKS(100));
-
-//         bool connected = client.connect(
-//             clientId.c_str(),
-//             MQTT_USER,
-//             MQTT_PASSWORD,
-//             "tortoise/system/status", // LWT topic
-//             1,                        // QoS
-//             true,                     // retain
-//             "OFFLINE"                 // LWT message
-//         );
-
-//         if (connected)
-//         {
-//             Serial.println("MQTT Connected!");
-//             return true;
-//         }
-//         else
-//         {
-//             attempts++;
-//             Serial.printf("MQTT failed rc=%d (%d/%d)\n",
-//                           client.state(), attempts, MAX_ATTEMPTS);
-
-//             client.disconnect();
-//             vTaskDelay(pdMS_TO_TICKS(1000));
-//         }
-//     }
-
-//     return false;
-// }
 bool connectToMqtt(PubSubClient &client)
 {
     if (WiFi.status() != WL_CONNECTED)
@@ -159,7 +26,7 @@ bool connectToMqtt(PubSubClient &client)
         Serial.println("Connecting to MQTT...");
 
         String clientId = "ESP32_Tortoise_" + String(random(0xffff), HEX);
-        String lwtPayload = "{\"status\":\"offline\"}";  // ✅ Add this line
+        String lwtPayload = "{\"status\":\"offline\"}"; // ✅ Add this line
 
         vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -191,7 +58,6 @@ bool connectToMqtt(PubSubClient &client)
 
     return false;
 }
-
 
 // Initialize MQTT Service
 void MQTTService_init()
@@ -230,23 +96,25 @@ MQTTState MQTTService_getState()
     }
     return state;
 }
-void publishSystemStatus(PubSubClient& client)
+void publishSystemStatus(PubSubClient &client)
 {
-    String systemJson = "{";
+    HeaterState heaterState = HeaterControl_getState();
+    float targetTemp = ScheduleService_getCurrentTarget();
+
+      String systemJson = "{";
     systemJson += "\"status\":\"online\",";
     systemJson += "\"rssi\":" + String(WiFi.RSSI()) + ",";
     systemJson += "\"uptime\":" + String(millis() / 1000) + ",";
     systemJson += "\"wifi\":\"connected\",";
     systemJson += "\"mqtt\":\"connected\",";
-    systemJson += "\"firebase\":\"" + String(
-        FirebaseService_getState() == FIREBASE_CONNECTED ? "connected" : "disconnected"
-    ) + "\"";
+    systemJson += "\"firebase\":\"" + String(FirebaseService_getState() == FIREBASE_CONNECTED ? "connected" : "disconnected") + "\",";  // ✅ Fixed: removed extra colon
+    systemJson += "\"heater_on\":" + String(heaterState == HEATER_STATE_ON ? "1" : "0");  // ✅ Fixed: removed trailing comma
     systemJson += "}";
 
     client.publish(
         "tortoise/system/status",
         systemJson.c_str(),
-        true   // retained
+        true // retained
     );
 }
 
@@ -460,6 +328,13 @@ void MQTTService_task(void *pvParameters)
                         vTaskDelay(pdMS_TO_TICKS(10));
 
                         publishSuccess &= localMqttClient.publish("tortoise/outside", String(temps.outside).c_str(), true);
+                        vTaskDelay(pdMS_TO_TICKS(10));
+
+                        // ✅ Add heater status publishing
+                        HeaterState heaterState = HeaterControl_getState();
+                        String heaterValue = (heaterState == HEATER_STATE_ON) ? "1" : "0";
+                        publishSuccess &= localMqttClient.publish("tortoise/heaterOn", heaterValue.c_str(), true);
+                        vTaskDelay(pdMS_TO_TICKS(10));
 
                         if (!publishSuccess)
                         {
@@ -495,16 +370,15 @@ void MQTTService_task(void *pvParameters)
             }
         }
 
-       
-static unsigned long lastSystemPublish = 0;
+        static unsigned long lastSystemPublish = 0;
 
-if (millis() - lastSystemPublish >= 30000)
-{
-    publishSystemStatus(localMqttClient);
-    lastSystemPublish = millis();
-}
+        if (millis() - lastSystemPublish >= 30000)
+        {
+            publishSystemStatus(localMqttClient);
+            lastSystemPublish = millis();
+        }
 
         // Small delay to prevent task from consuming too much CPU
         vTaskDelay(pdMS_TO_TICKS(500));
-}
+    }
 }

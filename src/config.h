@@ -8,10 +8,10 @@
 // #define DEBUG_ALL
 
 // Subsystem debug
-#define DEBUG_WIFI
-#define DEBUG_TEMPERATURE
-#define DEBUG_MQTT
-#define DEBUG_FIREBASE
+//#define DEBUG_WIFI
+////#define DEBUG_TEMPERATURE
+//#define DEBUG_MQTT
+//#define DEBUG_FIREBASE
 // #define DEBUG_LED
 // #define DEBUG_HEATER
 
